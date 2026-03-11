@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VM Agent-Native — Project Hub</title>
+    <style>
+        :root{--bg:#fff;--bg-alt:#f7f7f7;--bg-card:#fff;--text:#1a1a1a;--text-secondary:#6b6b6b;--text-muted:#999;--accent:#1a5276;--accent-hover:#154360;--accent-light:#d4e6f1;--haiku:#27ae60;--haiku-light:#eafaf1;--haiku-bg:rgba(39,174,96,.08);--sonnet:#f39c12;--sonnet-light:#fef5e7;--sonnet-bg:rgba(243,156,18,.08);--opus:#e74c3c;--opus-light:#fdedec;--opus-bg:rgba(231,76,60,.08);--success:#1e8449;--success-light:#d5f5e3;--warning:#b7950b;--warning-light:#fef9e7;--danger:#c0392b;--danger-light:#fdedec;--border:#e5e5e5;--border-light:#f0f0f0;--font-serif:Charter,'Bitstream Charter','Sitka Text',Cambria,Georgia,serif;--font-sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--font-mono:'SF Mono',Monaco,Consolas,'Liberation Mono',monospace;--content-width:840px;--space-xs:.5rem;--space-sm:1rem;--space-md:1.5rem;--space-lg:2.5rem;--space-xl:4rem}
+        [data-theme="dark"]{--bg:#1a1a1a;--bg-alt:#242424;--bg-card:#1e1e1e;--text:#e5e5e5;--text-secondary:#a0a0a0;--text-muted:#707070;--accent:#5dade2;--accent-hover:#85c1e9;--accent-light:#1b2631;--haiku:#2ecc71;--haiku-light:#1a2e1a;--haiku-bg:rgba(46,204,113,.1);--sonnet:#f4d03f;--sonnet-light:#2e2a0a;--sonnet-bg:rgba(244,208,63,.1);--opus:#e74c3c;--opus-light:#2e1a1a;--opus-bg:rgba(231,76,60,.1);--border:#333;--border-light:#2a2a2a}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+        body{font-family:var(--font-serif);font-size:1.1rem;line-height:1.75;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+        .topbar{border-bottom:1px solid var(--border);padding:var(--space-sm) var(--space-md);display:flex;justify-content:space-between;align-items:center;max-width:920px;margin:0 auto}
+        .topbar-brand{font-family:var(--font-sans);font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+        .topbar-brand a{color:var(--text);text-decoration:none}
+        .topbar-right{display:flex;align-items:center;gap:var(--space-sm)}
+        .topbar-date{font-family:var(--font-sans);font-size:.8rem;color:var(--text-muted)}
+        .theme-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;cursor:pointer;font-size:.85rem;color:var(--text-secondary)}
+        .theme-toggle:hover{border-color:var(--text-secondary)}
+        .container{max-width:var(--content-width);margin:0 auto;padding:var(--space-xl) var(--space-md)}
+        h1{font-size:clamp(2rem,5vw,2.8rem);font-weight:700;line-height:1.15;letter-spacing:-.03em;margin-bottom:.3rem}
+        .subtitle{font-size:1.05rem;color:var(--text-secondary);line-height:1.55;margin-bottom:var(--space-md)}
+        h2{font-family:var(--font-sans);font-size:1.15rem;font-weight:700;margin:var(--space-lg) 0 var(--space-sm)}
+        h3{font-family:var(--font-sans);font-size:.95rem;font-weight:700;margin:var(--space-md) 0 var(--space-xs)}
+        hr{border:none;border-top:1px solid var(--border);margin:var(--space-lg) 0}
+        .sl{font-family:var(--font-sans);font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:var(--space-sm);margin-top:var(--space-lg)}
+
+        /* Mission Box */
+        .mission{background:var(--bg-alt);border-left:4px solid var(--accent);padding:var(--space-md);border-radius:0 8px 8px 0;margin:var(--space-md) 0}
+        .mission-label{font-family:var(--font-sans);font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem}
+        .mission p{font-size:1.15rem;font-weight:600;line-height:1.5;margin:0}
+        .mission .vision{font-size:.95rem;font-weight:400;color:var(--text-secondary);margin-top:.6rem}
+
+        /* Phase Timeline */
+        .timeline{position:relative;padding-left:2rem;margin:var(--space-md) 0}
+        .timeline::before{content:'';position:absolute;left:.55rem;top:.5rem;bottom:.5rem;width:2px;background:var(--border)}
+        .phase{position:relative;margin-bottom:var(--space-md)}
+        .phase-dot{position:absolute;left:-1.7rem;top:.35rem;width:14px;height:14px;border-radius:50%;border:2px solid var(--border)}
+        .phase-dot.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-light)}
+        .phase-dot.upcoming{background:var(--bg);border-color:var(--text-muted)}
+        .phase-label{font-family:var(--font-sans);font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+        .phase-title{font-family:var(--font-sans);font-size:1rem;font-weight:700;margin:.15rem 0 .3rem}
+        .phase-items{font-family:var(--font-sans);font-size:.85rem;color:var(--text-secondary);line-height:1.6}
+        .phase-items .done{color:var(--haiku)}
+        .phase-items .wip{color:var(--sonnet)}
+        .phase-items .todo{color:var(--text-muted)}
+
+        /* Workstream Cards */
+        .ws-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-sm)}
+        .ws{background:var(--bg-alt);border:1px solid var(--border-light);border-radius:8px;padding:var(--space-md);transition:border-color .2s}
+        .ws:hover{border-color:var(--accent)}
+        .ws-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem}
+        .ws-num{font-family:var(--font-mono);font-size:.7rem;font-weight:700;color:var(--accent)}
+        .ws-badge{font-family:var(--font-sans);font-size:.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.12rem .4rem;border-radius:3px}
+        .ws-active{background:var(--success-light);color:var(--success)}
+        .ws-partial{background:var(--warning-light);color:var(--warning)}
+        .ws-planned{background:var(--bg);color:var(--text-muted);border:1px solid var(--border)}
+        .ws h4{font-family:var(--font-sans);font-size:.92rem;font-weight:700;margin-bottom:.3rem}
+        .ws p{font-size:.82rem;color:var(--text-secondary);line-height:1.45;margin:0}
+        .ws-link{font-family:var(--font-sans);font-size:.75rem;color:var(--accent);text-decoration:none;display:inline-block;margin-top:.4rem}
+        .ws-link:hover{text-decoration:underline}
+
+        /* Metrics Table */
+        .m-table{width:100%;border-collapse:collapse;font-family:var(--font-sans);font-size:.82rem;margin:var(--space-sm) 0}
+        .m-table th{text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);padding:.5rem .6rem;border-bottom:2px solid var(--border)}
+        .m-table td{padding:.5rem .6rem;border-bottom:1px solid var(--border-light)}
+        .m-table tr:hover{background:var(--bg-alt)}
+        .m-current{font-family:var(--font-mono);font-weight:700}
+        .m-target{font-family:var(--font-mono);color:var(--accent)}
+
+        /* Principles */
+        .principles{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-xs);margin:var(--space-sm) 0}
+        .principle{background:var(--bg-alt);border-radius:6px;padding:.75rem;text-align:center}
+        .principle-icon{font-size:1.5rem;margin-bottom:.2rem}
+        .principle-name{font-family:var(--font-sans);font-size:.78rem;font-weight:700}
+        .principle-desc{font-family:var(--font-sans);font-size:.68rem;color:var(--text-secondary);margin-top:.15rem;line-height:1.35}
+
+        .footer{margin-top:var(--space-xl);padding-top:var(--space-md);border-top:1px solid var(--border);text-align:center;font-family:var(--font-sans);font-size:.78rem;color:var(--text-muted)}
+
+        @media(max-width:720px){.ws-grid{grid-template-columns:1fr}.principles{grid-template-columns:1fr}.container{padding:var(--space-lg) var(--space-sm)}}
+        @media print{.topbar,.theme-toggle{display:none}body{font-size:10pt;color:#000}.container{padding:0;max-width:100%}}
+    </style>
+</head>
+<body>
+<nav class="topbar">
+    <div class="topbar-brand"><a href="https://vm-coderock.github.io">← Hub</a> &nbsp;/&nbsp; Agent-Native</div>
+    <div class="topbar-right">
+        <span class="topbar-date" id="updated"></span>
+        <button class="theme-toggle" onclick="toggleTheme()">◐</button>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>🧬 VM Agent-Native</h1>
+    <p class="subtitle">The project to make Varun Malhotra the most AI-native executive in federal consulting. Not AI-curious. Not AI-augmented. <strong>AI-native.</strong></p>
+
+    <div class="mission">
+        <div class="mission-label">Mission</div>
+        <p>A single human, backed by a world-class agent system, operating with the intelligence surface of a 50-person team.</p>
+        <p class="vision">Real-time market intelligence. Automated opportunity capture. Multi-model orchestration that optimizes itself. Institutional memory that never forgets. All of it composable, auditable, and continuously improving.</p>
+    </div>
+
+    <!-- ============ PRINCIPLES ============ -->
+    <div class="sl">Principles</div>
+    <div class="principles">
+        <div class="principle">
+            <div class="principle-icon">🎯</div>
+            <div class="principle-name">Quality Over Speed</div>
+            <div class="principle-desc">Right model, right job. Never cut corners on deliverables.</div>
+        </div>
+        <div class="principle">
+            <div class="principle-icon">🤝</div>
+            <div class="principle-name">Human ↔ Agent</div>
+            <div class="principle-desc">Human sets direction. Agent handles execution and scale.</div>
+        </div>
+        <div class="principle">
+            <div class="principle-icon">🔍</div>
+            <div class="principle-name">Transparent Ops</div>
+            <div class="principle-desc">Every cost, model choice, and tradeoff is logged and visible.</div>
+        </div>
+        <div class="principle">
+            <div class="principle-icon">📈</div>
+            <div class="principle-name">Continuous Optimization</div>
+            <div class="principle-desc">Track metrics. Identify waste. Upgrade workflows. Never settle.</div>
+        </div>
+        <div class="principle">
+            <div class="principle-icon">🔒</div>
+            <div class="principle-name">Security by Default</div>
+            <div class="principle-desc">Audit trails. Data classification. Approval gates.</div>
+        </div>
+        <div class="principle">
+            <div class="principle-icon">🍳</div>
+            <div class="principle-name">Eat Your Own Cooking</div>
+            <div class="principle-desc">If it works for a CEO, it works for a federal program office.</div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- ============ TIMELINE ============ -->
+    <div class="sl">Timeline</div>
+    <div class="timeline">
+        <div class="phase">
+            <div class="phase-dot active"></div>
+            <div class="phase-label">Phase 1 — Weeks 1-2 (Now)</div>
+            <div class="phase-title">Foundation</div>
+            <div class="phase-items">
+                <span class="done">✅ Multi-agent infrastructure</span> · <span class="done">✅ Model tiering</span> · <span class="done">✅ Intelligence automation</span><br>
+                <span class="wip">🔄 Multi-model pipelines</span> · <span class="wip">🔄 Mission Control</span> · <span class="todo">⬜ Google Workspace</span>
+            </div>
+        </div>
+        <div class="phase">
+            <div class="phase-dot upcoming"></div>
+            <div class="phase-label">Phase 2 — Weeks 3-4</div>
+            <div class="phase-title">Expansion</div>
+            <div class="phase-items">
+                <span class="todo">⬜ Memory &amp; knowledge overhaul</span> · <span class="todo">⬜ Tool integration sprint</span> · <span class="todo">⬜ Automated VEB pipeline</span> · <span class="todo">⬜ Cost &amp; quality tracking</span>
+            </div>
+        </div>
+        <div class="phase">
+            <div class="phase-dot upcoming"></div>
+            <div class="phase-label">Phase 3 — Weeks 5-8</div>
+            <div class="phase-title">Optimization</div>
+            <div class="phase-items">
+                <span class="todo">⬜ Semantic memory search</span> · <span class="todo">⬜ News clustering</span> · <span class="todo">⬜ Portfolio dashboard</span> · <span class="todo">⬜ Security audit</span>
+            </div>
+        </div>
+        <div class="phase">
+            <div class="phase-dot upcoming"></div>
+            <div class="phase-label">Phase 4 — Weeks 9-12</div>
+            <div class="phase-title">Client Readiness</div>
+            <div class="phase-items">
+                <span class="todo">⬜ Reference architecture</span> · <span class="todo">⬜ Deployment playbook</span> · <span class="todo">⬜ ROI framework</span> · <span class="todo">⬜ First client pilot</span>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- ============ WORKSTREAMS ============ -->
+    <div class="sl">8 Workstreams</div>
+    <div class="ws-grid">
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-1</span>
+                <span class="ws-badge ws-active">Active</span>
+            </div>
+            <h4>🤖 Multi-Agent Orchestration</h4>
+            <p>Fleet of specialized agents — Haiku scrapers, Sonnet analysts, Opus strategists — coordinating through shared workspace, memory, and task handoffs.</p>
+            <a class="ws-link" href="https://vm-coderock.github.io/model-usage.html">Model Dashboard →</a>
+        </div>
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-2</span>
+                <span class="ws-badge ws-active">Active</span>
+            </div>
+            <h4>⚡ Model Optimization</h4>
+            <p>Three-tier model strategy with continuous cost and quality tracking. Every workflow optimized for the cheapest path to a correct output.</p>
+            <a class="ws-link" href="https://vm-coderock.github.io/model-usage.html">Dashboard →</a>
+        </div>
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-3</span>
+                <span class="ws-badge ws-active">Active</span>
+            </div>
+            <h4>📡 Intelligence & Research</h4>
+            <p>Heartbeat scans, XSAM nightly monitor, Reddit scan, VEB briefs, xopp opportunity analysis, agentic services research. Continuous intelligence gathering.</p>
+            <a class="ws-link" href="https://vm-coderock.github.io/">Intel Hub →</a>
+        </div>
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-4</span>
+                <span class="ws-badge ws-partial">Partial</span>
+            </div>
+            <h4>🧠 Memory & Knowledge</h4>
+            <p>Persistent institutional memory that compounds. Daily logs, long-term curation, decision tracking, contact relationships, semantic search.</p>
+        </div>
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-5</span>
+                <span class="ws-badge ws-partial">Partial</span>
+            </div>
+            <h4>🔧 Tool Integration</h4>
+            <p>Every tool agent-accessible: email, calendar, tasks, GitHub, SAM.gov, USASpending, Dropbox, LinkedIn, SharePoint, RSS feeds, voice/TTS.</p>
+        </div>
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-6</span>
+                <span class="ws-badge ws-active">Active</span>
+            </div>
+            <h4>📊 Dashboards & Visibility</h4>
+            <p>Intelligence Hub, Model Usage Dashboard, Mission Control, portfolio view, cost tracking, quality metrics. Everything visible at a glance.</p>
+            <a class="ws-link" href="https://vm-coderock.github.io/">Hub →</a>
+        </div>
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-7</span>
+                <span class="ws-badge ws-planned">Planned</span>
+            </div>
+            <h4>🔒 Security & Governance</h4>
+            <p>Audit trails, data classification, access controls, incident response, compliance mapping to NIST/FedRAMP for client deployments.</p>
+        </div>
+        <div class="ws">
+            <div class="ws-top">
+                <span class="ws-num">WS-8</span>
+                <span class="ws-badge ws-planned">Planned</span>
+            </div>
+            <h4>📦 Client Replication</h4>
+            <p>Package everything into a deployable framework. Reference architecture, playbook, ROI calculator. The bridge to Changeis service offerings.</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- ============ METRICS ============ -->
+    <div class="sl">Success Metrics</div>
+    <table class="m-table">
+        <thead>
+            <tr><th>Metric</th><th>Current</th><th>30-Day</th><th>90-Day</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Workflows automated</td><td class="m-current">5</td><td class="m-target">10</td><td class="m-target">20</td></tr>
+            <tr><td>Model cost efficiency</td><td class="m-current">Baseline</td><td class="m-target">-30%</td><td class="m-target">-50%</td></tr>
+            <tr><td>Intelligence coverage</td><td class="m-current">FAA + govcon</td><td class="m-target">+ DoD, DHS, OPM</td><td class="m-target">Full federal</td></tr>
+            <tr><td>Memory searchability</td><td class="m-current">File grep</td><td class="m-target">Structured</td><td class="m-target">Semantic</td></tr>
+            <tr><td>Tool integrations</td><td class="m-current">7</td><td class="m-target">12</td><td class="m-target">20</td></tr>
+            <tr><td>Deliverable quality (1-5)</td><td class="m-current">Untracked</td><td class="m-target">4.0</td><td class="m-target">4.5</td></tr>
+            <tr><td>Time to opp analysis</td><td class="m-current">~2 hrs</td><td class="m-target">45 min</td><td class="m-target">20 min</td></tr>
+            <tr><td>Agent uptime</td><td class="m-current">Best-effort</td><td class="m-target">95%</td><td class="m-target">99%</td></tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        VM Agent-Native · Changeis · Confidential<br>
+        <span style="font-size:.7rem;margin-top:.3rem;display:block">Charter: <a href="https://github.com/VM-CodeRock/vm-agent-native" style="color:var(--accent)">GitHub</a> · <a href="https://vm-coderock.github.io" style="color:var(--accent)">Intelligence Hub</a> · Created March 11, 2026</span>
+    </div>
+</div>
+
+<script>
+function toggleTheme(){const h=document.documentElement;const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n)}
+const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s);
+document.getElementById('updated').textContent='Updated: '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+</script>
+</body>
+</html>
